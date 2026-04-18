@@ -49,3 +49,22 @@ jobs:
 #      with:
 #          name: plugin_dll_arm64
 #          path: arm64\NppOpenAI.dll
+
+  unit-tests:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v6
+
+    - name: Configure CMake
+      run: cmake -S tests -B build/tests -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build unit tests
+      run: cmake --build build/tests --config Release
+
+    - name: Run unit tests
+      run: ctest --test-dir build/tests --output-on-failure

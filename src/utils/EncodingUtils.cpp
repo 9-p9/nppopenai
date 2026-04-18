@@ -92,15 +92,26 @@ std::string toUTF8(const std::wstring &wide)
 /**
  * Converts a UTF-8 encoded char array to a wide character (UTF-16) TCHAR array
  *
- * Uses the Windows API's MultiByteToWideChar function to perform the conversion.
+ * On Windows this uses the native MultiByteToWideChar API.
+ * On other platforms a portable fallback is used so that the code can be
+ * compiled and tested outside of the Windows environment.
  *
  * @param utf8 UTF-8 encoded char array to convert
  * @return Pointer to a newly allocated TCHAR array containing the wide character string
  */
 TCHAR *multiByteToWideChar(const char *utf8)
 {
+#ifdef _WIN32
     int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, nullptr, 0);
     wchar_t *wide = new wchar_t[len];
     MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wide, len);
     return reinterpret_cast<TCHAR *>(wide);
+#else
+    // Portable fallback for non-Windows builds (used in cross-platform tests).
+    // Re-uses the existing stringToWstring helper so encoding behaviour is consistent.
+    std::wstring ws = stringToWstring(std::string(utf8));
+    wchar_t *wide = new wchar_t[ws.size() + 1];
+    wmemcpy(wide, ws.c_str(), ws.size() + 1);
+    return wide;
+#endif
 }

@@ -124,9 +124,14 @@ inline int MultiByteToWideChar(UINT, DWORD, const char* src, int srcLen,
                                 wchar_t* dst, int dstLen)
 {
     if (!src) return 0;
+    // Count characters needed (null-terminated mode when srcLen < 0)
     int needed = 0;
-    for (int i = 0; (srcLen < 0 ? src[i] : i < srcLen); ++i) needed++;
-    if (srcLen < 0) needed++; // null terminator
+    if (srcLen < 0) {
+        while (src[needed]) ++needed;
+        ++needed; // include null terminator
+    } else {
+        needed = srcLen;
+    }
     if (!dst || dstLen == 0) return needed;
     int i = 0;
     while (i < dstLen - 1 && (srcLen < 0 ? src[i] != '\0' : i < srcLen)) {
@@ -171,7 +176,7 @@ inline DWORD GetPrivateProfileString(const wchar_t*, const wchar_t*,
 {
     if (out && sz > 0 && def) {
         DWORD i = 0;
-        while (def[i] && i < sz - 1) { out[i] = def[i]; ++i; }
+        while (i < sz - 1 && def[i]) { out[i] = def[i]; ++i; }
         out[i] = L'\0';
     }
     return 0;
